@@ -39,8 +39,9 @@ python train.py --train_file data/ptb-train.pkl --val_file data/ptb-val.pkl --sa
 
 For fine-tuning:
 ```
-python train.py --train_file data/ptb-train.pkl --val_file data/ptb-val.pkl --save_path rnng-urnng.pt
---mode unsupervised --lr 0.1 --train_q_epochs 10 --epochs 10 --gpu 0 --kl_warmup 0
+python train.py --train_from rnng.pt --train_file data/ptb-train.pkl --val_file data/ptb-val.pkl 
+--save_path rnng-urnng.pt --mode unsupervised --lr 0.1 --train_q_epochs 10 --epochs 10 
+--gpu 0 --kl_warmup 0
 ```
 
 To train the LM:
