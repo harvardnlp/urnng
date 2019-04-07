@@ -122,7 +122,8 @@ class RNNG(nn.Module):
                h_dim = 20,
                num_layers = 1,
                dropout = 0,
-               q_dim = 20):
+               q_dim = 20,
+               max_len = 250):
     super(RNNG, self).__init__()
     self.S = 0 #action idx for shift/generate
     self.R = 1 #action idx for reduce
@@ -140,9 +141,9 @@ class RNNG(nn.Module):
     self.q_dim = q_dim    
     self.q_leaf_rnn = nn.LSTM(w_dim, q_dim, bidirectional = True, batch_first = True)
     self.q_crf = ConstituencyTreeCRF()
-    self.pad1 = 0 
-    self.pad2 = 2
-    self.q_pos_emb = nn.Embedding(250, w_dim)
+    self.pad1 = 0 # idx for <s> token from ptb.dict
+    self.pad2 = 2 # idx for </s> token from ptb.dict 
+    self.q_pos_emb = nn.Embedding(max_len, w_dim) # position embeddings
     self.vocab_mlp[-1].weight = self.emb.weight #share embeddings
 
   def get_span_scores(self, x):
@@ -211,7 +212,7 @@ class RNNG(nn.Module):
     for b in range(crf_input.size(0)):    
       action = get_actions(tree_brackets[b])
       if has_eos:
-        actions.append(action + [0, 1]) #we train the model to generate <s> and then do a final reduce
+        actions.append(action + [self.S, self.R]) #we train the model to generate <s> and then do a final reduce
       else:
         actions.append(action)
     actions = torch.Tensor(actions).float().cuda()
@@ -243,6 +244,7 @@ class RNNG(nn.Module):
       child2_c = []
       stack_context = []
       for b in range(batch_expand):
+        # batch all the shift/reduce operations separately
         if actions[b][l].item() == self.R:
           child1 = stack_child[b].pop()
           child2 = stack_child[b].pop()
@@ -275,8 +277,6 @@ class RNNG(nn.Module):
           stack_child[b].append((input_b, new_child[1][child_idx].unsqueeze(0)))
           child_idx += 1
         stack_input.append(input_b)
-        
-      # assert(child_idx == new_child[0].size(0))
       stack_input = torch.cat(stack_input, 0)
       stack_h_all = []
       for k in range(self.num_layers):
@@ -286,7 +286,7 @@ class RNNG(nn.Module):
       for b in range(batch_expand):
         stack2[b].append([[stack_h[k][0][b], stack_h[k][1][b]] for k in range(self.num_layers)])
       
-    contexts = torch.stack(contexts, 1)
+    contexts = torch.stack(contexts, 1) #stack contexts
     action_logit_p = self.action_mlp_p(contexts).squeeze(2) 
     action_prob_p = F.sigmoid(action_logit_p).clamp(min=1e-7, max=1-1e-7)
     action_shift_score = (1 - action_prob_p).log()
@@ -307,12 +307,13 @@ class RNNG(nn.Module):
     return log_probs_word, log_probs_action_p, log_probs_action_q, actions, entropy
 
   def forward_actions(self, x, actions, has_eos=True):
+    # this is for when ground through actions are available
     init_emb = self.dropout(self.emb(x[:, 0]))
     x = x[:, 1:]    
     if has_eos:
       new_actions = []
       for action in actions:
-        new_actions.append(action + [0,1])
+        new_actions.append(action + [self.S, self.R])
       actions = new_actions
     batch, length = x.size(0), x.size(1)
     word_vecs =  self.dropout(self.emb(x))
@@ -395,6 +396,7 @@ class RNNG(nn.Module):
     return log_probs_word, log_probs_action_p, actions
   
   def forward_tree(self, x, actions, has_eos=True):
+    # this is log q( tree | x) for discriminative parser training in supervised RNNG
     init_emb = self.dropout(self.emb(x[:, 0]))
     x = x[:, 1:-1]
     batch, length = x.size(0), x.size(1)
