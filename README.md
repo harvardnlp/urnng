@@ -1,7 +1,7 @@
 # Unsupervised Recurrent Neural Network Grammars
 
 This is an implementation of the paper:  
-[Unsupervised Recurrent Neural Network Grammars](https://arxiv.org/pdf/1804.0000.pdf)  
+[Unsupervised Recurrent Neural Network Grammars](https://arxiv.org/abs/1904.03746)  
 Yoon Kim, Alexander Rush, Lei Yu, Adhiguna Kuncoro, Chris Dyer, Gabor Melis  
 NAACL 2019  
 
@@ -29,7 +29,7 @@ python train.py --train_file data/ptb-train.pkl --val_file data/ptb-val.pkl --sa
 ```
 where `save_path` is where you want to save the model, and `gpu 0` is for using the first GPU
 in the cluster (the mapping from PyTorch GPU index to your cluster's GPU index may vary).
-Training should take 2 to 4 days depending on your setup.
+Training should take 2 to 3 days depending on your setup.
 
 To train the RNNG:
 ```
@@ -41,7 +41,7 @@ For fine-tuning:
 ```
 python train.py --train_from rnng.pt --train_file data/ptb-train.pkl --val_file data/ptb-val.pkl 
 --save_path rnng-urnng.pt --mode unsupervised --lr 0.1 --train_q_epochs 10 --epochs 10 
---gpu 0 --kl_warmup 0
+--min_epochs 6 --gpu 0 --kl_warmup 0
 ```
 
 To train the LM:
@@ -58,7 +58,7 @@ python eval_ppl.py --model_file urnng.pt --test_file data/ptb-test.pkl --samples
 ```
 The argument `samples` is for the number of importance weighted samples, and `is_temp` is for
 flattening the inference network's distribution (footnote 14 in the paper).
-The same evalulation code will work for RNNG. 
+The same evaluation code will work for RNNG. 
 
 For LM evaluation:
 ```
@@ -85,13 +85,13 @@ punctuation and evaluate on unlabeled F1.
 Note that some of the details regarding the preprocessing is slightly different from the original 
 paper. In particular, in this implementation we replace singleton words a single `<unk>` token
 instead of using Berkeley parser's mapping rules. This results in slight lower perplexity
-for all models, since the vocabulary size is smaller. Here are the results I get
+for all models, since the vocabulary size is smaller. Here are the perplexty numbers I get
 in this setting:
 
-- RNNLM: 89.2
-- RNNG: 83.7
-- URNNG: 85.1 (F1: 38.4)
-
+- RNNLM: 89.2 
+- RNNG: 83.7 
+- URNNG: 85.1 (F1: 38.4) 
+- RNNG --> URNNG: 82.5
 
 ## Acknowledgements
 Some of our preprocessing and evaluation code is based on the following repositories:  

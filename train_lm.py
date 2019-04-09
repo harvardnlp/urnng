@@ -147,7 +147,7 @@ def eval(data, model, count_eos_ppl = 0):
   with torch.no_grad():
     for i in list(reversed(range(len(data)))):
       sents, length, batch_size, gold_actions, gold_spans, gold_binary_trees, other_data = data[i] 
-      if length == 1:
+      if length == 1: #we ignore length 1 sents in URNNG eval so do this for LM too
         continue
       if args.count_eos_ppl == 1:
         length += 1 

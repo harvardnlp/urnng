@@ -138,6 +138,7 @@ def main(args):
         kl_pen = min(1., kl_pen + kl_warmup_batch) 
       sents, length, batch_size, gold_actions, gold_spans, gold_binary_trees, other_data = train_data[i]      
       if length == 1:
+        # we ignore length 1 sents during training/eval since we work with binary trees only
         continue
       sents = sents.cuda()
       b += 1
@@ -250,7 +251,7 @@ def eval(data, model, samples = 0, count_eos_ppl = 0):
   with torch.no_grad():
     for i in list(reversed(range(len(data)))):
       sents, length, batch_size, gold_actions, gold_spans, gold_binary_trees, other_data = data[i] 
-      if length == 1:
+      if length == 1: # length 1 sents are ignored since URNNG needs at least length 2 sents
         continue
       if args.count_eos_ppl == 1:
         tree_length = length

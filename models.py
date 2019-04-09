@@ -50,7 +50,7 @@ class SeqLSTM(nn.Module):
                h_dim = 0,
                num_layers = 1,
                dropout = 0):
-    super(SeqLSTM, self).__init__()
+    super(SeqLSTM, self).__init__()    
     self.i_dim = i_dim
     self.h_dim = h_dim
     self.num_layers = num_layers
@@ -60,8 +60,6 @@ class SeqLSTM(nn.Module):
     self.dropout_layer = nn.Dropout(dropout)
 
   def forward(self, x, prev_h = None):
-    #x = b x i_dim
-    #prev_h = [(h_l, c_l) for l layers]
     if prev_h is None:
       prev_h = [(x.new(x.size(0), self.h_dim).fill_(0),
                  x.new(x.size(0), self.h_dim).fill_(0)) for _ in range(self.num_layers)]
@@ -79,17 +77,12 @@ class SeqLSTM(nn.Module):
     return curr_h
 
 class TreeLSTM(nn.Module):
-  def __init__(self, dim = 200,
-               e_dim = 0,
-               dropout = 0):
+  def __init__(self, dim = 200):
     super(TreeLSTM, self).__init__()
     self.dim = dim
-    self.e_dim = e_dim
-    self.linear = nn.Linear(dim*2 + e_dim, dim*5)
+    self.linear = nn.Linear(dim*2, dim*5)
 
   def forward(self, x1, x2, e=None):
-    #x = (h, c). h, c = b x dim. hidden/cell states of children
-    #e = b x e_dim. external information vector
     if not isinstance(x1, tuple):
       x1 = (x1, None)    
     h1, c1 = x1 
@@ -102,13 +95,7 @@ class TreeLSTM(nn.Module):
       c1 = torch.zeros_like(h1)
     if c2 is None:
       c2 = torch.zeros_like(h2)
-    if self.e_dim == 0:
-      concat = torch.cat([h1, h2], 1)
-    else:
-      if e is None:
-        concat = torch.cat([h1, h2, torch.zeros_like(h1)], 1)
-      else:
-        concat = torch.cat([h1, h2, e], 1)
+    concat = torch.cat([h1, h2], 1)
     all_sum = self.linear(concat)
     i, f1, f2, o, g = all_sum.split(self.dim, 1)
 

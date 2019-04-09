@@ -35,6 +35,8 @@ class Dataset(object):
     binary_tree = [d[3] for d in other_data]
     spans = [d[5] for d in other_data]
     batch_size = self.batch_size[idx].item()
+    # by default, we return sents with <s> </s> tokens
+    # hence we subtract 2 from length as these are (by default) not counted for evaluation
     data_batch = [sents[:, :length], length-2, batch_size, actions, 
                   spans, binary_tree, other_data]
     return data_batch
