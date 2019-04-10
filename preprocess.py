@@ -198,6 +198,8 @@ def get_data(args):
             assert(len(tags) == len(sent))
             if lowercase == 1:
                 sent = sent_lower
+            if (len(sent) > seqlength and apply_length_filter == 1) or len(sent) < minseqlength:
+                continue
             sent_str = " ".join(sent)
             if replace_num == 1:
                 sent = [clean_number(w) for w in sent]
@@ -324,7 +326,7 @@ def main(arguments):
     parser.add_argument('--testfile', help="Path to test validation data.", required=True)
     parser.add_argument('--batchsize', help="Size of each minibatch.", type=int, default=16)
     parser.add_argument('--seqlength', help="Maximum sequence length. Sequences longer "
-                                               "than this are dropped.", type=int, default=150)
+                                               "than this are dropped.", type=int, default=200)
     parser.add_argument('--minseqlength', help="Minimum sequence length. Sequences shorter "
                                                "than this are dropped.", type=int, default=0)
     parser.add_argument('--outputfile', help="Prefix of the output file names. ", type=str,
