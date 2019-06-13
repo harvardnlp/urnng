@@ -213,6 +213,7 @@ def main(args):
     print('--------------------------------')
     if val_ppl < best_val_ppl:
       best_val_ppl = val_ppl
+      best_val_f1 = val_f1
       checkpoint = {
         'args': args.__dict__,
         'model': model.cpu(),
