@@ -211,10 +211,9 @@ def main(args):
     val_ppl, val_f1 = eval(val_data, model, 
                            samples = args.mc_samples, count_eos_ppl = args.count_eos_ppl)
     print('--------------------------------')
-    if val_f1 > best_val_f1:
-      best_val_f1 = val_f1
     if val_ppl < best_val_ppl:
       best_val_ppl = val_ppl
+      best_val_f1 = val_f1
       checkpoint = {
         'args': args.__dict__,
         'model': model.cpu(),
