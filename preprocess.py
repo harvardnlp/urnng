@@ -59,6 +59,7 @@ class Indexer:
 
     def load_vocab(self, vocab_file):
         self.d = {}
+        self.idx2word = {}
         for line in open(vocab_file, 'r'):
             v, k = line.strip().split()
             self.d[v] = int(k)
